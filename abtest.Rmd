@@ -1,0 +1,123 @@
+---
+title: Bayesian A/B testing in Stan
+author: Jeffrey Arnold
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, autodep = TRUE, message = FALSE)
+```
+
+A few examples of estimating A/B tests in Stan. These examples are 
+translations of the examples in Chapter 7 
+of *Bayesian Methods for Hackers* by Cameron Davidson-Pilon.
+
+## Setup
+
+```{r message=FALSE}
+library("rstan")
+library("bayesplot")
+library("tidyverse")
+library("lubridate")
+```
+
+## A/B Test
+
+Consider the example of a website with two versions $A$ and $B$.
+We are interested in how the different versions of the website affect conversions.
+
+The data comprises the number of visitors to site versions A and B, and
+the number of conversions to these sites.
+```{r}
+visitors = c(A = 1300, B = 1275)
+conversions = c(A = 120, B = 125)
+```
+
+The model of the experiment is an A/B test in which 
+$$
+\begin{aligned}
+n_A &\sim \mathsf{Binomial}(N_A, \pi_A) & n_B &\sim \mathsf{Binomial}(N_B, \pi_B) \\
+\pi_A &= \mathsf{InvLogit}(\eta_A) & \pi_B &= \mathsf{InvLogit}(\eta_B) \\
+\eta_A &= \mathsf{Normal}(0, 2.5) & \eta_B &= \mathsf{Normal}(0, 2.5)
+\end{aligned}
+$$
+
+The following `.stan` model calculates the difference in probabilities between two independent samples.
+```{r comment="", echo=FALSE}
+cat(readLines("stan/abtest.stan"), sep = "\n")
+```
+
+Run and fit the model.
+```{r message=FALSE}
+abtest_data <- list(visitors_A = visitors["A"],
+                    visitors_B = visitors["B"],
+                    conversions_A = conversions["A"],
+                    conversions_B = conversions["B"])
+```
+```{r include=FALSE}
+abtest_fit <- rstan::stan("stan/abtest.stan", data = abtest_data,
+                          chains = 1, iter = 1000, refresh = 0)
+```
+
+Calculate the probability that $\pi_A$ 
+```{r}
+pi_A <- drop(rstan::extract(abtest_fit, "pi_A")[[1]])
+pi_B <- drop(rstan::extract(abtest_fit, "pi_B")[[1]])
+mean(pi_A > pi_B)
+mean(pi_A < pi_B)
+```
+
+## A/B Experiment With Revenue
+
+Instead of measuring the effectiveness of the A/B test by which version gets more conversions, we can consider which type of conversion and the monetary value of each.
+
+In this case there are four types of conversions, which result in \$79, \$49, \$25, and \$0, respectively.
+We thus compare the effectiveness of the experiment by which produces the most revenue.
+
+Let $K = 4$ be the number of outcomes. Let $n_A, n_b$ be $K$ dimensional vectors of the number of visitors which fell into each of the four categories.
+Since $\sum_{k=1}^K n_{A,k} = N_A$, it implicitly defines the total number of visitors assigned to the $A$ version, and similarly for the $B$ version.
+$$
+\begin{aligned}
+n_A &\sim \mathsf{Multinomial}(\theta_A) & n_B &\sim \mathsf{Multinomial}(\theta_B)
+\end{aligned}
+$$
+The parameters $\theta_A, \theta_B$ are $K$-simplexes defining the probabilities of visitors engaging in each action.
+These are given Dirichlet priors.
+$$
+\begin{aligned}[t]
+\theta_A &\sim \mathsf{Dirichlet}(a_A) & \theta_B &\sim \mathsf{Dirichlet}(a_A) 
+\end{aligned}
+$$
+
+In Stan, this model is written as
+```{r, comment="", echo=FALSE}
+cat(readLines("stan/abtest2.stan"), sep = "\n")
+```
+
+```{r}
+abtest2_data <- list(
+  outcomes = 4,
+  payoffs = c(79, 49, 25, 0),
+  n_A = c(10, 46, 80, 864),
+  n_B = c(49, 84, 200, 1667),
+  a_A = rep(1, 4),
+  a_B = rep(1, 4)
+)
+```
+
+```{r include=FALSE}
+abtest2_fit <- rstan::stan("stan/abtest2.stan", data = abtest2_data,
+                           iter = 1000, chains = 1)
+```
+
+```{r}
+posterior <- as.matrix(abtest2_fit)
+mcmc_areas(posterior, pars = c("revenue_A", "revenue_B", "revenue_diff"))
+```
+
+```{r}
+mcmc_areas_ridges(posterior, pars = c("revenue_A", "revenue_B", "revenue_diff"))
+```
+
+```{r}
+mcmc_intervals(posterior, pars = c("revenue_A", "revenue_B", "revenue_diff"))
+```

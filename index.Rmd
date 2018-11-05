@@ -1,0 +1,137 @@
+---
+title: Introduction to Stan
+author: Jeffrey Arnold
+date: November 5, 2018
+output:
+  xaringan::moon_reader:
+    chakra: libs/remark-latest.min.js
+    nature: 
+      countIncrementalSlides: false
+---
+
+# Bayesian inference
+
+$$
+\begin{aligned}
+\overbrace{p(\theta | \text{Data})}^{\text{posterior}} &= \frac{\overbrace{p(\text{Data} | \theta)}^{\text{likelihood}} \times \overbrace{p(\theta)}^{\text{prior}}}{\underbrace{p(\text{Data})}_{\text{marginal likelihood}}} \\
+&\propto p(\text{Data} | \theta) \times p(\theta) \\
+\end{aligned}
+$$
+
+---
+
+# Bayesian Inference: The Good
+
+1.  Directly estimates quantity of interest $p(\theta | \text{Data})$ (with uncertainty!)
+
+--
+
+1.  Separates model from estimation
+
+--
+
+1.  Separates inference from decision
+
+--
+
+1.  Common paradigm for inference and prediction
+
+--
+
+1.  Prior can incorporate domain expertise
+
+---
+
+# Bayesian Inference: The Bad
+
+1.  Integration ${\Huge\int} ucks$
+
+--
+
+1.  ... especially in high dimensions
+
+---
+
+# A Sample of the History of Bayesian Computation
+
+1.  Pre-1990s: mostly analytic
+1.  1990s: Gibbs sampling, personal computing
+1.  2010s: Autodiff, HMC, Variational Inference
+
+---
+
+# Hamiltonian Monte Carlo
+
+-   HMC :: Integration : BFGS :: Optimization
+
+--
+
+-   [Uses gradients to improve posterior exploration](https://chi-feng.github.io/mcmc-demo/app.html#HamiltonianMC,banana)
+
+---
+
+# What was needed for HMC adoption?
+
+-   HMC - Neal (1993) 
+
+--
+
+-   No-U-Turn (NUTS) Sampler (Hoffman, Gelman 2011) to auto-tune hyperparameters
+
+--
+
+-   Automatic differentiation to calculate gradients
+
+--
+
+---
+
+# Result: Upsurge in Probabilistic Programming Implementations
+
+-   Stan
+
+--
+
+-   PyMC
+
+--
+
+-   Tensorflow: Edward, greta
+-   Torch: pyro, probtorch
+
+---
+class: center
+
+![](logo_name.png)
+
+---
+
+# What is Stan? 
+
+-   High-level probabilistic programming language to specify models
+-   Implements HMC, variational inference, optimization methods to sample models
+-   C++ autodiff library
+-   Interfaces for command line, R (rstan), python (pystan), ...
+-   Active developers on cutting-edge of HMC research
+-   Large user community
+-   Many associated packages/tools
+
+---
+class: inverse, center
+
+# Examples
+
+---
+
+# Bayesian A/B Testing
+
+
+---
+
+# Pooling the Polls
+
+-  [Australia 2004-2007](https://jrnold.github.io/bugs-examples-in-stan/campaign.html)
+-  [US Election 2016](https://github.com/UW-CSSS-564/us-election-2016)
+
+---
+
