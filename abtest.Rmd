@@ -1,6 +1,8 @@
 ---
 title: Bayesian A/B testing in Stan
 author: Jeffrey Arnold
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r include=FALSE}
@@ -57,6 +59,11 @@ abtest_data <- list(visitors_A = visitors["A"],
 abtest_fit <- rstan::stan("stan/abtest.stan", data = abtest_data,
                           chains = 1, iter = 1000, refresh = 0)
 ```
+
+```{r}
+summary(abtest_fit)
+```
+
 
 Calculate the probability that $\pi_A$ 
 ```{r}
