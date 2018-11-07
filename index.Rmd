@@ -125,6 +125,7 @@ class: inverse, center
 
 # Bayesian A/B Testing
 
+[link](./abtest.html)
 
 ---
 
